@@ -8,6 +8,7 @@ import {
   RateDataError,
   CapViolationError,
   type QuoteInput,
+  type AccessorialsInput,
 } from "../lib/pricing";
 import type { CalcState, QuoteFormPayload } from "./lib/types";
 
@@ -71,6 +72,8 @@ export async function calculateQuote(_prev: CalcState, payload: QuoteFormPayload
     const unpack = toLabor(payload.unpack);
     const packing = containers.length > 0 || pack || unpack ? { containers, pack, unpack } : undefined;
 
+    const accessorials = toAccessorials(payload);
+
     const input: QuoteInput = {
       origin: { county: originCounty },
       destination: { county: destCounty },
@@ -79,6 +82,7 @@ export async function calculateQuote(_prev: CalcState, payload: QuoteFormPayload
       valuation,
       discountPct,
       packing,
+      accessorials,
     };
 
     return { ok: true, result: priceQuote(input, rates) };
@@ -118,4 +122,43 @@ function toLabor(
 
 function toTimeClass(s: string): "straight" | "time_and_half" | "double" {
   return s === "time_and_half" || s === "double" ? s : "straight";
+}
+
+/**
+ * Parse the optional accessorial fields. Each charge is included only when its
+ * inputs are present and positive; the engine then caps every line at its
+ * tariff maximum. Returns undefined when no accessorials apply.
+ */
+function toAccessorials(payload: QuoteFormPayload): AccessorialsInput | undefined {
+  const acc: AccessorialsInput = {};
+
+  const flightCount = Math.floor(Number(payload.flights?.count));
+  const flightWeight = Number(payload.flights?.weightLb);
+  if (flightCount > 0 && Number.isFinite(flightWeight) && flightWeight > 0) {
+    acc.flights = { count: flightCount, weightLb: flightWeight };
+  }
+
+  const carryFeet = Number(payload.longCarry?.feet);
+  const carryWeight = Number(payload.longCarry?.weightLb);
+  if (Number.isFinite(carryFeet) && carryFeet > 0 && Number.isFinite(carryWeight) && carryWeight > 0) {
+    acc.longCarry = { feet: carryFeet, weightLb: carryWeight };
+  }
+
+  if (payload.shuttle) {
+    const hours = Number(payload.shuttle.hours);
+    const persons = Number(payload.shuttle.persons);
+    if (Number.isFinite(hours) && hours > 0 && Number.isFinite(persons) && persons > 0) {
+      acc.shuttle = { hours, persons: Math.max(1, Math.floor(persons)), timeClass: toTimeClass(payload.shuttle.timeClass) };
+    }
+  }
+
+  const stops = Math.floor(Number(payload.extraStops));
+  if (stops > 0) acc.extraStops = stops;
+
+  const bulky = payload.bulky
+    .map((b) => ({ type: b.type, qty: Number(b.qty) }))
+    .filter((b) => b.type !== "" && Number.isFinite(b.qty) && b.qty > 0);
+  if (bulky.length > 0) acc.bulky = bulky;
+
+  return Object.keys(acc).length > 0 ? acc : undefined;
 }

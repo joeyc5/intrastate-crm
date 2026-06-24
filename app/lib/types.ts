@@ -26,4 +26,9 @@ export interface QuoteFormPayload {
   containers: { type: string; qty: string }[];
   pack?: { hours: string; persons: string; timeClass: string };
   unpack?: { hours: string; persons: string; timeClass: string };
+  flights?: { count: string; weightLb: string };
+  longCarry?: { feet: string; weightLb: string };
+  shuttle?: { hours: string; persons: string; timeClass: string };
+  extraStops?: string;
+  bulky: { type: string; qty: string }[];
 }
