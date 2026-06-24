@@ -1,0 +1,104 @@
+{
+  "_meta": {
+    "description": "SVM-configurable values, CORRECTED to MAX4 effective 2026-01-01. Supersedes svm-config.json (which was built on the stale 2025 edition). Nulls await input; '_pending' marks values being extracted from the 2026 tariff (see docs/SPEC-AUDIT-2026.md). Edited via Settings, not code.",
+    "spec": "SVM-Intrastate-Quote-App-SPEC.md",
+    "tariff_edition_label": "MAX4 effective 2026-01-01",
+    "supersedes": "svm-config.json (MAX4 2025-01-01 — stale)",
+    "audit": "docs/SPEC-AUDIT-2026.md"
+  },
+  "company": {
+    "legal_name": "Silicon Valley Moving & Storage Inc",
+    "address_line": "186 Barnard Ave",
+    "city_state_zip": "San Jose, CA 95125",
+    "phone": "408-941-0600",
+    "website": "https://www.SiliconValleyMoving.com",
+    "cal_t_number": "188960",
+    "logo_asset": null,
+    "brand_primary_hex": null,
+    "brand_secondary_hex": null,
+    "territory": "A",
+    "_territory_source": "Item 210 — Santa Clara County is Territory A. Packing labor uses origin territory, unpacking uses destination territory (Item 340 Note 3). See data/2026/territories.csv."
+  },
+  "pricing": {
+    "rate_basis": "max4_maximum",
+    "discount_pct_default": 0,
+    "discount_applies_to_svm_fees": false,
+    "discount_applies_to_materials": false,
+    "discount_excluded_charges": ["flight_long_carry", "item32_fraction_results"],
+    "_discount_exclusion_source": "Item 24 NOTE — 'may quote lower than max' does NOT apply to Item 32 or Item 140 Note 3, etc.",
+    "min_weight_lb": 5000,
+    "_min_weight_note": "SVM business minimum; confirm against any tariff minimum-weight basis (Item 310 lowest bracket / Item 80).",
+    "constructive_weight_lb_per_cf": 7,
+    "_constructive_weight_source": "Item 116 para 4; Item 164 — CONFIRMED current 2026",
+    "min_constructive_miles": 100,
+    "min_miles_comparator": "strictly_greater_than",
+    "_min_miles_source": "Item 16(1)(b): distance rates mandatory 'in excess of 100 miles'; block routes <= 100",
+    "distance_basis": "gps_or_distance_table",
+    "_distance_basis_source": "Item 40 (2026): constructive miles = shortest public-highway route via the Distance Table OR a GPS navigation tool/platform. GPS (e.g. Google Distance Matrix shortest-highway) is now a PERMITTED pricing basis; Distance Table 8 is no longer a hard dependency. Never fabricate a mileage.",
+    "materials_tax_rate_pct": null,
+    "_materials_tax_note": "External (CDTFA / Santa Clara County). Item 340 Note 9 confirms container rates EXCLUDE sales tax. Confirm rate with accountant.",
+    "quote_validity_days": 30
+  },
+  "rounding": {
+    "declared_value_round_up_dollars": 100,
+    "_declared_value_source": "Item 136 'or fraction thereof' per $100 (NOT Item 32)",
+    "percentage_of_rate": "half_cent_up",
+    "_percentage_source": "Item 32 Disposition of Fractions — applies to discount % and the 65% penalty calc only",
+    "money": "cent",
+    "weight_round_up_lb": null,
+    "_weight_round_note": "Spec's 'round weight to next 100 lb' is NOT grounded in Item 32. Weight feeds the Item 310 minimum-weight bracket + published Break Point. Re-ground or remove."
+  },
+  "valuation": {
+    "default_tier": "released",
+    "_legal_default_warning": "VERIFY (ambiguous in tariff). Two readings: (1) Item 136 para 1 bases the line-haul rate on $0.60/lb released value, so 'default Released' may be correct with $20,000 ACV as the no-declaration liability CAP; (2) NOTE 3 + para 6 frame ACV-$20k as the no-declaration default and attach the $1.12/$100 ACV rate to it (=> chargeable, not free). Resolve with SVM/BHGS before launch. Either way: do NOT silently book 'Released $0' without a recorded, signed valuation election.",
+    "actual_cash_value_default_cents_per_100": 112,
+    "min_declared_value_per_lb_cents": null,
+    "_min_declared_source": "Item 136 imposes NO mandatory floor. A minimum per-lb valuation is OPTIONAL and SVM-set; if elected it must be stated on the Agreement (Item 128 NOTE 3). Reclassify as CONFIG, not a tariff value to look up.",
+    "tiers": [
+      { "tier": "released", "label": "Released Value (60c/lb/article)", "rate_per_100_declared_cents": 0, "deductible_cents": 0, "source": "Item 136 para 1" },
+      { "tier": "fvrp250", "label": "Full Value Protection, shipper holds first $250 of claim", "rate_per_100_declared_cents": 67, "deductible_cents": 25000, "source": "Item 136 para 7(a) — 2026 ($0.67/$100; was $0.45)" },
+      { "tier": "fvrp500", "label": "Full Value Protection, shipper holds first $500 of claim", "rate_per_100_declared_cents": 38, "deductible_cents": 50000, "source": "Item 136 para 7(b) — 2026 ($0.38/$100; was $0.25)" }
+    ],
+    "_reference_tiers_not_offered": {
+      "full_value_no_deductible_cents_per_100": 220,
+      "actual_cash_value_cents_per_100": 112,
+      "default_if_undeclared": "Actual Cash Value up to $20,000",
+      "source": "Item 136 paras 6-7 — 2026"
+    }
+  },
+  "accessorials": {
+    "flight_long_carry": { "enabled": true, "basis": "per_100lb", "rate_cents": 226, "weight_basis": "carried_articles", "discountable": false, "source": "Item 140 para 1 — 2026 ($2.26/100lb; was $1.75). Note 3: charge on weight of articles carried, non-discountable per Item 24 NOTE." },
+    "elevator": { "enabled": true, "basis": "per_100lb", "rate_cents": 226, "source": "Item 140 (counts as a flight) — 2026" },
+    "piano_flight_inside": { "first_cents": 3930, "each_additional_cents": 1971, "source": "Item 140 para 2(a) — 2026 (was 3045/1525)" },
+    "piano_flight_outside": { "first_cents": 3930, "each_additional_step_cents": 90, "source": "Item 140 para 2(b) — 2026 (was 3045/60)" },
+    "flight_piece_basis_cents": 654, "_flight_piece_source": "Item 140 para 1 (Item 330 piece-rated shipments) — $6.54/piece",
+    "shuttle": { "enabled": true, "basis": "hourly_item320", "rate_cents_per_hour_terrA": null, "rate_cents_per_hour_terrB": null, "cap_to_max": true, "source": "Item 184 para 3 — charged at Item 320 hourly rates (Territory A/B), NOT flat. Rates pending Item 320 extraction." },
+    "piano_fee": { "enabled": true, "basis": "flat", "default_rate_cents": null, "_note": "SVM special-handling fee, separate from Item 140 piano flights." },
+    "bulky_fee": { "enabled": true, "basis": "item164_named_article", "default_rate_cents": null, "types": [], "_source": "Item 164 — tariff names bulky articles + sets max loading/unloading charge or weight additive. CONFIG must cap at Item 164 max. Article table pending extraction." },
+    "extra_stop": { "enabled": true, "basis": "split_pickup_delivery", "max_per_stop_cents": 13445, "_source": "Items 148/152/156 — distance-rated: composite-weight line haul + not more than $134.45 per extra stop. CONFIG caps at $134.45.", "line_haul_basis": "composite_weight_shortest_distance" },
+    "disassembly_reassembly": { "enabled": false, "basis": "hourly_item320", "_source": "Item 172 — outdoor/unusual articles (pool tables, swing sets, waterbeds) at Item 320 hourly. Schema hook; off in v1." },
+    "hoisting": { "enabled": false, "_source": "Item 168 — out of scope v1" },
+    "appliance_servicing": { "enabled": false, "_source": "Item 176 — out of scope v1 (Territory A/B rates exist if needed)" }
+  },
+  "packing": {
+    "sell_materials": true,
+    "charge_pack_labor": true,
+    "charge_unpack_labor": true,
+    "territory_keyed": true,
+    "labor_rates_source": "Item 340 — Territory A/B; per-container + per-hour. Rates pending extraction to data/2026/item340_*.csv",
+    "_note": "Item 340 Note 9: container sale prices EXCLUDE sales tax. Item 340 is IN the 2026 tariff (not external)."
+  },
+  "pipeline": ["lead", "estimate_sent", "booked", "completed", "lost"],
+  "scope": {
+    "states": ["CA"],
+    "intrastate_only": true,
+    "min_miles": 100,
+    "min_miles_comparator": "strictly_greater_than"
+  },
+  "data_sources_2026": {
+    "in_tariff_extracted": ["item310_distance_rates", "item320_hourly", "item340_packing_containers", "item136_valuation", "item140_flights", "item164_bulky", "item148_152_156_splits", "item184_shuttle"],
+    "genuinely_external": ["distance_table_8"],
+    "_note": "Spec §4 wrongly classified Item 310/340 as external. Only Distance Table 8 is truly external. See docs/SPEC-AUDIT-2026.md §5."
+  },
+  "out_of_scope_hooks": ["storage_in_transit", "margin_view", "quickbooks_sync", "hoisting", "appliance_servicing", "disassembly_reassembly", "local_hourly", "interstate"]
+}
