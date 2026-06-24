@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-svm-red: #e11b22;
-  --color-svm-red-dark: #c0141a;
-  --color-svm-blue: #1b6cc9;
-  --color-svm-blue-dark: #155aa8;
+  --color-svm-red: #f1201e;
+  --color-svm-red-dark: #cd1b1a;
+  --color-svm-blue: #0064dd;
+  --color-svm-blue-dark: #0052b8;
   --color-ink: #1a1d23;
   --color-paper: #f5f6f8;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
