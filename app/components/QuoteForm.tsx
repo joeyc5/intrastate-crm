@@ -19,8 +19,9 @@ const TIME_CLASSES = [
   { value: "double", label: "Double time" },
 ];
 
-const inputCls =
-  "w-full rounded-lg border border-black/15 px-3 py-2 text-sm outline-none transition focus:border-svm-blue focus:ring-2 focus:ring-svm-blue/20";
+const fieldBase =
+  "rounded-lg border border-black/15 px-3 py-2 text-sm outline-none transition focus:border-svm-blue focus:ring-2 focus:ring-svm-blue/20";
+const inputCls = `w-full ${fieldBase}`;
 
 interface BoxRow {
   id: number;
@@ -243,7 +244,7 @@ export function QuoteForm({
                         name="containerType"
                         value={box.type}
                         onChange={(e) => updateBox(box.id, { type: e.target.value })}
-                        className={`${inputCls} flex-1 bg-white`}
+                        className={`${fieldBase} min-w-0 flex-1 bg-white`}
                       >
                         {packingContainers.map((c) => (
                           <option key={c.key} value={c.key}>
@@ -259,7 +260,7 @@ export function QuoteForm({
                         value={box.qty}
                         onChange={(e) => updateBox(box.id, { qty: e.target.value })}
                         aria-label="quantity"
-                        className={`${inputCls} w-20`}
+                        className={`${fieldBase} w-20 shrink-0 text-center`}
                       />
                       <button
                         type="button"
@@ -392,7 +393,7 @@ export function QuoteForm({
                       <select
                         value={row.type}
                         onChange={(e) => updateBulky(row.id, { type: e.target.value })}
-                        className={`${inputCls} flex-1 bg-white`}
+                        className={`${fieldBase} min-w-0 flex-1 bg-white`}
                       >
                         {bulkyArticles.map((a) => (
                           <option key={a.key} value={a.key}>
@@ -407,7 +408,7 @@ export function QuoteForm({
                         value={row.qty}
                         onChange={(e) => updateBulky(row.id, { qty: e.target.value })}
                         aria-label="quantity"
-                        className={`${inputCls} w-20`}
+                        className={`${fieldBase} w-20 shrink-0 text-center`}
                       />
                       <button
                         type="button"
