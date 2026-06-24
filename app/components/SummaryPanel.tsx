@@ -5,7 +5,15 @@ import { centsToUsd, formatLb } from "../lib/format";
  * The signature surface: a dark, layered panel anchored by the live
  * Not-to-Exceed figure with the itemized breakdown beneath it.
  */
-export function SummaryPanel({ result, pending = false }: { result: QR; pending?: boolean }) {
+export function SummaryPanel({
+  result,
+  pending = false,
+  onMakePdf,
+}: {
+  result: QR;
+  pending?: boolean;
+  onMakePdf?: () => void;
+}) {
   const d = result.derived;
   return (
     <div
@@ -81,13 +89,10 @@ export function SummaryPanel({ result, pending = false }: { result: QR; pending?
       <div className="border-t border-white/10 px-6 py-5">
         <button
           type="button"
-          disabled
-          className="w-full cursor-not-allowed rounded-xl bg-white/[0.07] px-4 py-3 text-sm font-semibold text-white/55 ring-1 ring-inset ring-white/10"
+          onClick={onMakePdf}
+          className="w-full rounded-xl bg-svm-red px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-svm-red-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-svm-red/30"
         >
           Make PDF quote
-          <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/55">
-            next
-          </span>
         </button>
         <p className="mt-3 text-[11px] leading-relaxed text-white/55">
           MAX4-compliant estimate · valid 30 days · the final charge won&rsquo;t exceed this price without a

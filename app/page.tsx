@@ -28,7 +28,7 @@ export default function HomePage() {
         bulkyArticles={bulkyArticles(rates)}
         initialResult={initialResult}
       />
-      <footer className="mt-12 border-t border-line pt-5 text-center text-xs leading-relaxed text-ink-faint">
+      <footer className="mt-12 border-t border-line pt-5 text-center text-xs leading-relaxed text-ink-faint print:hidden">
         Silicon Valley Moving &amp; Storage Inc · 186 Barnard Ave, San Jose CA 95125 · 408-941-0600 ·
         www.SiliconValleyMoving.com · Cal T 188960
       </footer>
