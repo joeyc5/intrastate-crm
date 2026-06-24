@@ -29,6 +29,33 @@ export interface PackingInput {
   unpack?: PackingLaborInput; // hourly crew labor at the DESTINATION territory
 }
 
+export type Item320Crew = "one_person_driver" | "two_person_driver_helper" | "additional_person_each";
+
+export interface FlightsInput {
+  count: number; // number of flights (an elevator counts as one)
+  weightLb: number; // weight of the articles carried up the flights
+}
+export interface LongCarryInput {
+  feet: number; // total carry distance; first 75 ft is free
+  weightLb: number; // weight of the articles carried
+}
+export interface ShuttleInput {
+  hours: number;
+  persons: number; // crew size
+  timeClass: TimeClass;
+}
+export interface BulkyItemInput {
+  type: string; // matches a BulkyArticleRate.key
+  qty: number;
+}
+export interface AccessorialsInput {
+  flights?: FlightsInput;
+  longCarry?: LongCarryInput;
+  shuttle?: ShuttleInput; // Item 184 -> Item 320 hourly, at the ORIGIN territory
+  extraStops?: number; // additional pickup/delivery stops beyond the first of each
+  bulky?: BulkyItemInput[];
+}
+
 export interface QuoteInput {
   origin: { county: string };
   destination: { county: string };
@@ -38,6 +65,7 @@ export interface QuoteInput {
   valuation: ValuationInput;
   discountPct?: number;
   packing?: PackingInput;
+  accessorials?: AccessorialsInput;
 }
 
 export interface LineItem {
@@ -96,6 +124,18 @@ export interface PackingHourlyRate {
   perHourPerPersonCents: { A: number; B: number };
 }
 
+export interface BulkyArticleRate {
+  key: string;
+  label: string;
+  maxChargeCents: number; // Item 164 per-article flat maximum
+}
+
+export interface AccessorialRates {
+  flightPer100Cents: number; // Item 140 — $2.26 per 100 lb of articles carried (non-discountable)
+  extraStopMaxCents: number; // Items 148/152/156 — $134.45 per stop
+  shuttleMaxPerHourCents: number; // Item 184 -> Item 320 governing hourly max ($398.40)
+}
+
 export interface PricingPolicy {
   minWeightFloorLb: number;
   discountPctDefault: number;
@@ -114,6 +154,9 @@ export interface RateTables {
   valuationTiers: Map<ValuationTier, ValuationTierRate>;
   item340Containers: Map<string, ContainerRate>; // key -> container rate
   item340Hourly: Map<TimeClass, PackingHourlyRate>;
+  item320: Map<string, number>; // `${timeClass}:${crew}:${territory}` -> cents/hour
+  item164Bulky: Map<string, BulkyArticleRate>; // key -> bulky article rate
+  accessorialRates: AccessorialRates;
   policy: PricingPolicy;
 }
 

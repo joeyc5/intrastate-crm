@@ -5,6 +5,8 @@ import { dollarStringToCents } from "../money.js";
 import { ITEM310_WEIGHT_COLUMNS } from "./constants.js";
 import {
   RateDataError,
+  type AccessorialRates,
+  type BulkyArticleRate,
   type ContainerRate,
   type Item310Cell,
   type PackingHourlyRate,
@@ -95,6 +97,10 @@ interface ConfigShape {
   rounding: { weight_round_up_lb: number | null; declared_value_round_up_dollars: number };
   valuation: {
     tiers: Array<{ tier: string; label: string; rate_per_100_declared_cents: number; deductible_cents: number }>;
+  };
+  accessorials: {
+    flight_long_carry: { rate_cents: number };
+    extra_stop: { max_per_stop_cents: number };
   };
 }
 
@@ -188,11 +194,44 @@ function loadPackingHourly(path: string): Map<TimeClass, PackingHourlyRate> {
   return map;
 }
 
+function loadItem320(path: string): Map<string, number> {
+  const rows = parseCsv(readFileOrThrow(path));
+  const map = new Map<string, number>();
+  for (const r of rows) {
+    const tc = req(r.time_class, "item320.time_class");
+    const crew = req(r.crew, "item320.crew");
+    const terr = req(r.territory, "item320.territory");
+    map.set(`${tc}:${crew}:${terr}`, num(r.rate_cents_per_hour, "item320.rate_cents_per_hour"));
+  }
+  if (map.size === 0) throw new RateDataError(`No Item 320 hourly rates loaded from ${path}`);
+  return map;
+}
+
+function loadItem164Bulky(path: string): Map<string, BulkyArticleRate> {
+  const rows = parseCsv(readFileOrThrow(path));
+  const map = new Map<string, BulkyArticleRate>();
+  for (const r of rows) {
+    const key = req(r.article, "item164.article");
+    map.set(key, { key, label: key, maxChargeCents: dollarStringToCents(req(r.max_rate, "item164.max_rate")) });
+  }
+  if (map.size === 0) throw new RateDataError(`No Item 164 bulky articles loaded from ${path}`);
+  return map;
+}
+
+function buildAccessorialRates(config: ConfigShape, item320: Map<string, number>): AccessorialRates {
+  return {
+    flightPer100Cents: config.accessorials.flight_long_carry.rate_cents,
+    extraStopMaxCents: config.accessorials.extra_stop.max_per_stop_cents,
+    shuttleMaxPerHourCents: Math.max(...item320.values()), // Item 320 governing max ($398.40)
+  };
+}
+
 export function loadRates(version: string, dataRoot = join(process.cwd(), "data")): RateTables {
   const dir = join(dataRoot, version);
   const item310 = loadItem310(join(dir, "item310_distance_rates.csv"));
   const territories = loadTerritories(join(dir, "territories.csv"));
   const config = loadConfig(join(dir, `svm-config-${version}.json`));
+  const item320 = loadItem320(join(dir, "item320_hourly.csv"));
   const tables: RateTables = {
     effectiveDate: `${version}-01-01`,
     item310,
@@ -200,6 +239,9 @@ export function loadRates(version: string, dataRoot = join(process.cwd(), "data"
     valuationTiers: buildValuationTiers(config),
     item340Containers: loadItem340Containers(join(dir, "item340_containers.csv")),
     item340Hourly: loadPackingHourly(join(dir, "item340_packing_hourly.csv")),
+    item320,
+    item164Bulky: loadItem164Bulky(join(dir, "item164_bulky.csv")),
+    accessorialRates: buildAccessorialRates(config, item320),
     policy: buildPolicy(config),
   };
   // Spec §5: loadRates returns an immutable RateTables. Freeze the top-level
