@@ -63,6 +63,35 @@ export async function calculateQuote(_prev: CalcState, formData: FormData): Prom
     }
     const discountPct = Number.isFinite(discountRaw) && discountRaw > 0 ? discountRaw / 100 : 0;
 
+    // Packing (optional)
+    const containerTypes = formData.getAll("containerType").map((v) => String(v));
+    const containerQtys = formData.getAll("containerQty").map((v) => Number(v));
+    const containers = containerTypes
+      .map((type, i) => ({ type, qty: containerQtys[i] ?? 0 }))
+      .filter((c) => c.type !== "" && Number.isFinite(c.qty) && c.qty > 0);
+
+    const packHours = Number(formData.get("packHours"));
+    const pack =
+      Number.isFinite(packHours) && packHours > 0
+        ? {
+            hours: packHours,
+            persons: Math.max(1, Math.floor(Number(formData.get("packPersons")) || 1)),
+            timeClass: toTimeClass(formData.get("packTimeClass")),
+          }
+        : undefined;
+
+    const unpackHours = Number(formData.get("unpackHours"));
+    const unpack =
+      Number.isFinite(unpackHours) && unpackHours > 0
+        ? {
+            hours: unpackHours,
+            persons: Math.max(1, Math.floor(Number(formData.get("unpackPersons")) || 1)),
+            timeClass: toTimeClass(formData.get("unpackTimeClass")),
+          }
+        : undefined;
+
+    const packing = containers.length > 0 || pack || unpack ? { containers, pack, unpack } : undefined;
+
     const input: QuoteInput = {
       origin: { county: originCounty },
       destination: { county: destCounty },
@@ -70,6 +99,7 @@ export async function calculateQuote(_prev: CalcState, formData: FormData): Prom
       weight,
       valuation,
       discountPct,
+      packing,
     };
 
     return { ok: true, result: priceQuote(input, rates) };
@@ -92,4 +122,9 @@ export async function calculateQuote(_prev: CalcState, formData: FormData): Prom
     }
     return { ok: false, error: "Sorry — something went wrong calculating that quote." };
   }
+}
+
+function toTimeClass(v: FormDataEntryValue | null): "straight" | "time_and_half" | "double" {
+  const s = String(v ?? "");
+  return s === "time_and_half" || s === "double" ? s : "straight";
 }

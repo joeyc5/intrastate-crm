@@ -5,10 +5,13 @@ import { dollarStringToCents } from "../money.js";
 import { ITEM310_WEIGHT_COLUMNS } from "./constants.js";
 import {
   RateDataError,
+  type ContainerRate,
   type Item310Cell,
+  type PackingHourlyRate,
   type PricingPolicy,
   type RateTables,
   type Territory,
+  type TimeClass,
   type ValuationTier,
   type ValuationTierRate,
 } from "../types.js";
@@ -133,6 +136,58 @@ function buildPolicy(config: ConfigShape): PricingPolicy {
   };
 }
 
+const TIME_CLASS_BY_LABEL: Record<string, TimeClass> = {
+  "Straight Time": "straight",
+  "Time-and-a-Half": "time_and_half",
+  "Double Time": "double",
+};
+
+function loadItem340Containers(path: string): Map<string, ContainerRate> {
+  const rows = parseCsv(readFileOrThrow(path));
+  const map = new Map<string, ContainerRate>();
+  for (const r of rows) {
+    // Only per-"Each" containers carry a fixed sale price. The "Crates" row is
+    // priced per cubic foot (no sale price) and is out of scope for this pass.
+    if ((r.per_unit ?? "").trim() !== "Each") continue;
+    const key = req(r.container_description, "item340.container_description");
+    const label = (key.split("(")[0] ?? key).trim();
+    map.set(key, {
+      key,
+      label,
+      salePriceCents: dollarStringToCents(req(r.container_sale_price, "item340.container_sale_price")),
+      packCents: {
+        A: dollarStringToCents(req(r.pack_terrA, "item340.pack_terrA")),
+        B: dollarStringToCents(req(r.pack_terrB, "item340.pack_terrB")),
+      },
+      unpackCents: {
+        A: dollarStringToCents(req(r.unpack_terrA, "item340.unpack_terrA")),
+        B: dollarStringToCents(req(r.unpack_terrB, "item340.unpack_terrB")),
+      },
+    });
+  }
+  if (map.size === 0) throw new RateDataError(`No Item 340 containers loaded from ${path}`);
+  return map;
+}
+
+function loadPackingHourly(path: string): Map<TimeClass, PackingHourlyRate> {
+  const rows = parseCsv(readFileOrThrow(path));
+  const map = new Map<TimeClass, PackingHourlyRate>();
+  for (const r of rows) {
+    const tc = TIME_CLASS_BY_LABEL[(r.rate_type ?? "").trim()];
+    if (!tc) continue;
+    map.set(tc, {
+      perHourPerPersonCents: {
+        A: dollarStringToCents(req(r.terrA, "item340.terrA")),
+        B: dollarStringToCents(req(r.terrB, "item340.terrB")),
+      },
+    });
+  }
+  for (const required of ["straight", "time_and_half", "double"] as const) {
+    if (!map.has(required)) throw new RateDataError(`Missing Item 340 hourly rate "${required}"`);
+  }
+  return map;
+}
+
 export function loadRates(version: string, dataRoot = join(process.cwd(), "data")): RateTables {
   const dir = join(dataRoot, version);
   const item310 = loadItem310(join(dir, "item310_distance_rates.csv"));
@@ -143,6 +198,8 @@ export function loadRates(version: string, dataRoot = join(process.cwd(), "data"
     item310,
     territories,
     valuationTiers: buildValuationTiers(config),
+    item340Containers: loadItem340Containers(join(dir, "item340_containers.csv")),
+    item340Hourly: loadPackingHourly(join(dir, "item340_packing_hourly.csv")),
     policy: buildPolicy(config),
   };
   // Spec §5: loadRates returns an immutable RateTables. Freeze the top-level

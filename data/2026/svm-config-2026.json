@@ -35,8 +35,8 @@
     "_min_miles_source": "Item 16(1)(b): distance rates mandatory 'in excess of 100 miles'; block routes <= 100",
     "distance_basis": "gps_or_distance_table",
     "_distance_basis_source": "Item 40 (2026): constructive miles = shortest public-highway route via the Distance Table OR a GPS navigation tool/platform. GPS (e.g. Google Distance Matrix shortest-highway) is now a PERMITTED pricing basis; Distance Table 8 is no longer a hard dependency. Never fabricate a mileage.",
-    "materials_tax_rate_pct": null,
-    "_materials_tax_note": "External (CDTFA / Santa Clara County). Item 340 Note 9 confirms container rates EXCLUDE sales tax. Confirm rate with accountant.",
+    "materials_tax_rate_pct": 9.25,
+    "_materials_tax_note": "Santa Clara County / San Jose point-of-sale rate (Joey, 2026-06-24). Item 340 Note 9: container sale prices EXCLUDE sales tax; tax applies to materials only, not labor. Re-confirm with accountant / CDTFA if the rate changes.",
     "quote_validity_days": 30
   },
   "rounding": {

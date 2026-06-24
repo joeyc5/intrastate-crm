@@ -46,11 +46,25 @@ export function QuoteResult({ result }: { result: QR }) {
               <dd className="tabular-nums">−{centsToUsd(result.discountCents)}</dd>
             </div>
           )}
+          {result.materialsTaxCents > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-black/55">Materials sales tax</dt>
+              <dd className="tabular-nums">{centsToUsd(result.materialsTaxCents)}</dd>
+            </div>
+          )}
           <div className="flex justify-between border-t border-black/10 pt-2 text-base font-bold text-ink">
             <dt>Not-to-Exceed total</dt>
             <dd className="tabular-nums">{centsToUsd(result.nteTotalCents)}</dd>
           </div>
         </dl>
+
+        {result.warnings.length > 0 && (
+          <ul className="mt-3 space-y-1 text-xs text-svm-red-dark">
+            {result.warnings.map((w) => (
+              <li key={w}>⚠ {w}</li>
+            ))}
+          </ul>
+        )}
 
         <p className="mt-5 text-xs leading-relaxed text-black/45">
           MAX4-compliant estimate · valid 30 days · the final charge will not exceed this
