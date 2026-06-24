@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseCsv } from "./csv.js";
 import { dollarStringToCents } from "../money.js";
+import { ITEM310_WEIGHT_COLUMNS } from "./constants.js";
 import {
   RateDataError,
   type Item310Cell,
@@ -31,7 +32,7 @@ function req(value: string | undefined, label: string): string {
   return value;
 }
 
-export const ITEM310_WEIGHT_COLUMNS = [0, 1000, 2000, 5000, 8000, 12000, 16000] as const;
+export { ITEM310_WEIGHT_COLUMNS };
 
 export function assertItem310Complete(cells: Item310Cell[]): void {
   // Group cells by mileage band; each band must have all 7 weight columns.
@@ -137,11 +138,14 @@ export function loadRates(version: string, dataRoot = join(process.cwd(), "data"
   const item310 = loadItem310(join(dir, "item310_distance_rates.csv"));
   const territories = loadTerritories(join(dir, "territories.csv"));
   const config = loadConfig(join(dir, `svm-config-${version}.json`));
-  return {
+  const tables: RateTables = {
     effectiveDate: `${version}-01-01`,
     item310,
     territories,
     valuationTiers: buildValuationTiers(config),
     policy: buildPolicy(config),
   };
+  // Spec §5: loadRates returns an immutable RateTables. Freeze the top-level
+  // object so the loaded dataset can't be reassigned by consumers.
+  return Object.freeze(tables);
 }

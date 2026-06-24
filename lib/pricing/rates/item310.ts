@@ -1,6 +1,5 @@
 import { RateDataError, type Item310Cell } from "../types.js";
-
-const WEIGHT_COLUMNS = [0, 1000, 2000, 5000, 8000, 12000, 16000] as const;
+import { ITEM310_WEIGHT_COLUMNS } from "./constants.js";
 
 function cellsForBand(cells: Item310Cell[], milesOver: number, milesNotOver: number | null): Map<number, Item310Cell> {
   const map = new Map<number, Item310Cell>();
@@ -50,7 +49,7 @@ export function item310Charge(
   }
 
   let best: { amountCents: number; weightColumnLb: number } | null = null;
-  for (const col of WEIGHT_COLUMNS) {
+  for (const col of ITEM310_WEIGHT_COLUMNS) {
     const billed = weightLb >= col ? weightLb : col;
     const amountCents = Math.round((billed * rateFor(col)) / 100);
     if (best === null || amountCents < best.amountCents) best = { amountCents, weightColumnLb: col };
