@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-svm-red: #e11b22;
+  --color-svm-red-dark: #c0141a;
+  --color-svm-blue: #1b6cc9;
+  --color-svm-blue-dark: #155aa8;
+  --color-ink: #1a1d23;
+  --color-paper: #f5f6f8;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
