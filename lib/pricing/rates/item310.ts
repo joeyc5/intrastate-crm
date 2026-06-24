@@ -20,8 +20,6 @@ export function item310Charge(
   let rateFor: (col: number) => number;
   let bandLabel: string;
 
-  let availableColumns: number[];
-
   if (miles <= 850) {
     let over: number | null = null;
     let notOver: number | null = null;
@@ -32,7 +30,6 @@ export function item310Charge(
     }
     if (over === null || notOver === null) throw new RateDataError(`No Item 310 mileage band for ${miles} mi`);
     const map = cellsForBand(cells, over, notOver);
-    availableColumns = WEIGHT_COLUMNS.filter((c) => map.has(c));
     rateFor = (col) => {
       const cell = map.get(col);
       if (!cell) throw new RateDataError(`Missing Item 310 cell ${over}-${notOver} col ${col}`);
@@ -43,7 +40,6 @@ export function item310Charge(
     const base = cellsForBand(cells, 800, 850);
     const add = cellsForBand(cells, 850, null);
     const inc = Math.ceil((miles - 850) / 50);
-    availableColumns = WEIGHT_COLUMNS.filter((c) => base.has(c) && add.has(c));
     rateFor = (col) => {
       const b = base.get(col);
       const a = add.get(col);
@@ -54,7 +50,7 @@ export function item310Charge(
   }
 
   let best: { amountCents: number; weightColumnLb: number } | null = null;
-  for (const col of availableColumns) {
+  for (const col of WEIGHT_COLUMNS) {
     const billed = weightLb >= col ? weightLb : col;
     const amountCents = Math.round((billed * rateFor(col)) / 100);
     if (best === null || amountCents < best.amountCents) best = { amountCents, weightColumnLb: col };

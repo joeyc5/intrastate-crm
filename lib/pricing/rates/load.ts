@@ -31,16 +31,40 @@ function req(value: string | undefined, label: string): string {
   return value;
 }
 
+export const ITEM310_WEIGHT_COLUMNS = [0, 1000, 2000, 5000, 8000, 12000, 16000] as const;
+
+export function assertItem310Complete(cells: Item310Cell[]): void {
+  // Group cells by mileage band; each band must have all 7 weight columns.
+  const bands = new Map<string, Set<number>>();
+  for (const c of cells) {
+    const key = `${c.milesOver}:${c.milesNotOver}`;
+    const existing = bands.get(key) ?? new Set<number>();
+    existing.add(c.weightGroupMinLb);
+    bands.set(key, existing);
+  }
+  for (const [bandKey, cols] of bands) {
+    for (const required of ITEM310_WEIGHT_COLUMNS) {
+      if (!cols.has(required)) {
+        throw new RateDataError(
+          `Item 310 data incomplete: band "${bandKey}" is missing weight column ${required} lb`,
+        );
+      }
+    }
+  }
+}
+
 function loadItem310(path: string): Item310Cell[] {
   const rows = parseCsv(readFileOrThrow(path));
   if (rows.length === 0) throw new RateDataError(`Empty item310 file: ${path}`);
-  return rows.map((r) => ({
+  const cells = rows.map((r) => ({
     milesOver: num(r.miles_over, "item310.miles_over"),
     milesNotOver: r.miles_not_over === "" ? null : num(r.miles_not_over, "item310.miles_not_over"),
     weightGroupMinLb: num(r.weight_group_min_lb, "item310.weight_group_min_lb"),
     rateCentsPer100: dollarStringToCents(req(r.rate_per_100lb, "item310.rate_per_100lb")),
     breakPointLb: r.break_point_lb === "" ? null : num(r.break_point_lb, "item310.break_point_lb"),
   }));
+  assertItem310Complete(cells);
+  return cells;
 }
 
 function loadTerritories(path: string): Map<string, Territory> {

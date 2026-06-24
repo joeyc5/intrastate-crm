@@ -1,7 +1,7 @@
 // lib/pricing/rates/load.test.ts
 import { describe, it, expect } from "vitest";
-import { loadRates } from "./load.js";
-import { RateDataError } from "../types.js";
+import { loadRates, assertItem310Complete } from "./load.js";
+import { RateDataError, type Item310Cell } from "../types.js";
 
 describe("loadRates('2026')", () => {
   const rates = loadRates("2026");
@@ -40,5 +40,35 @@ describe("loadRates('2026')", () => {
   });
   it("throws RateDataError when the data directory is missing", () => {
     expect(() => loadRates("1999")).toThrow(RateDataError);
+  });
+});
+
+describe("assertItem310Complete", () => {
+  const fullBand = (milesOver: number, milesNotOver: number | null): Item310Cell[] =>
+    [0, 1000, 2000, 5000, 8000, 12000, 16000].map((col) => ({
+      milesOver,
+      milesNotOver,
+      weightGroupMinLb: col,
+      rateCentsPer100: 5000,
+      breakPointLb: null,
+    }));
+
+  it("passes when every band has all 7 weight columns", () => {
+    const cells = [...fullBand(100, 120), ...fullBand(850, null)];
+    expect(() => assertItem310Complete(cells)).not.toThrow();
+  });
+
+  it("throws RateDataError when a band is missing a weight column", () => {
+    // Remove the 2000 lb column from the 100-120 band.
+    const cells = fullBand(100, 120).filter((c) => c.weightGroupMinLb !== 2000);
+    expect(() => assertItem310Complete(cells)).toThrow(RateDataError);
+  });
+
+  it("includes the band key and missing column in the error message", () => {
+    const cells = fullBand(100, 120).filter((c) => c.weightGroupMinLb !== 5000);
+    let msg = "";
+    try { assertItem310Complete(cells); } catch (e) { msg = (e as Error).message; }
+    expect(msg).toContain("100:120");
+    expect(msg).toContain("5000");
   });
 });

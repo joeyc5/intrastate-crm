@@ -4,10 +4,18 @@ import { item310Charge } from "./item310.js";
 import { loadRates } from "./load.js";
 import type { Item310Cell } from "../types.js";
 
-// Tiny synthetic band for isolated weight-break logic: 100-120 mi, two columns.
+// Synthetic band for isolated weight-break logic: 100-120 mi.
+// All 7 WEIGHT_COLUMNS are present so item310Charge can iterate WEIGHT_COLUMNS fail-loud.
+// Cols 2000/5000/8000/12000/16000 are set to 5000 cents/100 lb (same as col 1000), so the
+// weight-break optimization still picks col 0 below the break point and col 1000 above it.
 const SYNTH: Item310Cell[] = [
   { milesOver: 100, milesNotOver: 120, weightGroupMinLb: 0, rateCentsPer100: 10000, breakPointLb: 500 },
   { milesOver: 100, milesNotOver: 120, weightGroupMinLb: 1000, rateCentsPer100: 5000, breakPointLb: null },
+  { milesOver: 100, milesNotOver: 120, weightGroupMinLb: 2000, rateCentsPer100: 5000, breakPointLb: null },
+  { milesOver: 100, milesNotOver: 120, weightGroupMinLb: 5000, rateCentsPer100: 5000, breakPointLb: null },
+  { milesOver: 100, milesNotOver: 120, weightGroupMinLb: 8000, rateCentsPer100: 5000, breakPointLb: null },
+  { milesOver: 100, milesNotOver: 120, weightGroupMinLb: 12000, rateCentsPer100: 5000, breakPointLb: null },
+  { milesOver: 100, milesNotOver: 120, weightGroupMinLb: 16000, rateCentsPer100: 5000, breakPointLb: null },
 ];
 
 describe("item310Charge weight-break (synthetic)", () => {
