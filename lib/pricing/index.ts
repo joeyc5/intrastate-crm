@@ -6,6 +6,8 @@ import { valuation } from "./steps/valuation.js";
 import { applyCaps } from "./steps/applyCaps.js";
 import { applyDiscount } from "./steps/applyDiscount.js";
 import { total } from "./steps/total.js";
+import { packing } from "./steps/packing.js";
+import { roundItem32 } from "./money.js";
 import { assertInvariants } from "./guardrails/invariants.js";
 
 export function priceQuote(input: QuoteInput, rates: RateTables): QuoteResult {
@@ -16,11 +18,25 @@ export function priceQuote(input: QuoteInput, rates: RateTables): QuoteResult {
   const valuationLine = valuation(input, rates);
   const lineItems = [lh.lineItem, valuationLine];
 
+  const pack = packing(input.packing, rates, { originTerritory, destTerritory });
+  lineItems.push(...pack.lineItems);
+
   applyCaps(lineItems);
 
   const discountPct = input.discountPct ?? rates.policy.discountPctDefault;
   const discountCents = applyDiscount(lineItems, discountPct);
-  const materialsTaxCents = 0; // core spine: no materials yet
+
+  const warnings: string[] = [];
+  let materialsTaxCents = 0;
+  if (pack.materialsCents > 0) {
+    const taxPct = rates.policy.materialsTaxRatePct;
+    if (taxPct == null) {
+      warnings.push("Materials sales tax is not configured — confirm the Santa Clara County rate.");
+    } else {
+      materialsTaxCents = roundItem32((pack.materialsCents * taxPct) / 100);
+    }
+  }
+
   const { subtotalCents, nteTotalCents } = total(lineItems, discountCents, materialsTaxCents);
 
   const result: QuoteResult = {
@@ -37,7 +53,7 @@ export function priceQuote(input: QuoteInput, rates: RateTables): QuoteResult {
     discountCents,
     materialsTaxCents,
     nteTotalCents,
-    warnings: [],
+    warnings,
   };
 
   assertInvariants(result);
@@ -45,10 +61,12 @@ export function priceQuote(input: QuoteInput, rates: RateTables): QuoteResult {
 }
 
 export { loadRates } from "./rates/load.js";
+export { packingContainers } from "./rates/item340.js";
 export { penalty65Tier1, penalty65Tier2 } from "./guardrails/penalty65.js";
 export type {
   QuoteInput, QuoteResult, LineItem, QuoteDerived, RateTables,
   Territory, ValuationTier, WeightInput, ValuationInput,
+  PackingInput, PackingContainerInput, PackingLaborInput, TimeClass, ContainerRate,
 } from "./types.js";
 export {
   DistanceTooShortError, RateDataError, CapViolationError, ValuationRequiredError,

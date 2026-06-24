@@ -10,6 +10,25 @@ export type ValuationInput =
   | { tier: "fvrp250"; declaredValueUsd: number }
   | { tier: "fvrp500"; declaredValueUsd: number };
 
+export type TimeClass = "straight" | "time_and_half" | "double";
+
+export interface PackingContainerInput {
+  type: string; // matches a ContainerRate.key
+  qty: number;
+}
+
+export interface PackingLaborInput {
+  hours: number;
+  persons: number;
+  timeClass: TimeClass;
+}
+
+export interface PackingInput {
+  containers: PackingContainerInput[];
+  pack?: PackingLaborInput; // hourly crew labor at the ORIGIN territory
+  unpack?: PackingLaborInput; // hourly crew labor at the DESTINATION territory
+}
+
 export interface QuoteInput {
   origin: { county: string };
   destination: { county: string };
@@ -18,6 +37,7 @@ export interface QuoteInput {
   minWeightFloorLb?: number;
   valuation: ValuationInput;
   discountPct?: number;
+  packing?: PackingInput;
 }
 
 export interface LineItem {
@@ -64,6 +84,18 @@ export interface ValuationTierRate {
   deductibleCents: number;
 }
 
+export interface ContainerRate {
+  key: string; // stable id (the full Item 340 description)
+  label: string; // short display label
+  salePriceCents: number; // Item 340 ¶1 container sale price (materials, taxable)
+  packCents: { A: number; B: number }; // per-container labor (unused in hourly mode)
+  unpackCents: { A: number; B: number };
+}
+
+export interface PackingHourlyRate {
+  perHourPerPersonCents: { A: number; B: number };
+}
+
 export interface PricingPolicy {
   minWeightFloorLb: number;
   discountPctDefault: number;
@@ -80,6 +112,8 @@ export interface RateTables {
   item310: Item310Cell[];
   territories: Map<string, Territory>; // key = county.trim().toLowerCase()
   valuationTiers: Map<ValuationTier, ValuationTierRate>;
+  item340Containers: Map<string, ContainerRate>; // key -> container rate
+  item340Hourly: Map<TimeClass, PackingHourlyRate>;
   policy: PricingPolicy;
 }
 
