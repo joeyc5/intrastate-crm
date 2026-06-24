@@ -1,13 +1,30 @@
 @import "tailwindcss";
 
 @theme {
+  /* Brand */
   --color-svm-red: #f1201e;
   --color-svm-red-dark: #cd1b1a;
   --color-svm-blue: #0064dd;
   --color-svm-blue-dark: #0052b8;
-  --color-ink: #1a1d23;
-  --color-paper: #f5f6f8;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Ink (text) */
+  --color-ink: #14161b;
+  --color-ink-soft: #565d6b;
+  --color-ink-faint: #858c99;
+
+  /* Surfaces */
+  --color-paper: #eceff4;
+  --color-surface: #ffffff;
+  --color-line: #e3e7ee;
+
+  /* Signature dark summary panel */
+  --color-panel: #14171f;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* One elevation scale */
+  --shadow-card: 0 1px 2px rgb(20 22 27 / 0.04), 0 6px 20px -6px rgb(20 22 27 / 0.08);
+  --shadow-panel: 0 18px 50px -12px rgb(10 16 30 / 0.55);
 }
 
 html {
@@ -16,6 +33,11 @@ html {
 
 body {
   background-color: var(--color-paper);
+  /* Soft top key-light so the ground has depth, not a flat fill */
+  background-image: radial-gradient(130% 70% at 50% -15%, #f6f8fc 0%, var(--color-paper) 58%);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
