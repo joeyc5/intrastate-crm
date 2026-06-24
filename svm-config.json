@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "description": "Single source of truth for SVM-configurable values. Edited via Settings, not code. Nulls are awaiting input; see OPEN-ITEMS.md.",
+    "spec": "SVM-Intrastate-Quote-App-SPEC.md",
+    "tariff_edition_label": "MAX4 effective 2025-01-01"
+  },
+  "company": {
+    "legal_name": "Silicon Valley Moving & Storage Inc",
+    "address_line": "186 Barnard Ave",
+    "city_state_zip": "San Jose, CA 95125",
+    "phone": "408-941-0600",
+    "website": "https://www.SiliconValleyMoving.com",
+    "cal_t_number": "188960",
+    "logo_asset": null,
+    "brand_primary_hex": null,
+    "brand_secondary_hex": null
+  },
+  "pricing": {
+    "rate_basis": "max4_maximum",
+    "discount_pct_default": 0,
+    "discount_applies_to_svm_fees": false,
+    "discount_applies_to_materials": false,
+    "min_weight_lb": 5000,
+    "constructive_weight_lb_per_cf": 7,
+    "min_constructive_miles": 100,
+    "materials_tax_rate_pct": null,
+    "quote_validity_days": 30
+  },
+  "rounding": {
+    "weight_round_up_lb": 100,
+    "declared_value_round_up_dollars": 100,
+    "money": "cent",
+    "_source": "Item 32 Disposition of Fractions — confirm exact rule"
+  },
+  "valuation": {
+    "default_tier": "released",
+    "min_declared_value_per_lb_cents": null,
+    "_min_declared_source": "Item 136 — confirm floor",
+    "tiers": [
+      { "tier": "released", "label": "Released Value (60¢/lb/article)", "rate_per_100_declared_cents": 0, "deductible_cents": 0 },
+      { "tier": "fvrp250", "label": "Full Value Protection, $250 deductible", "rate_per_100_declared_cents": 45, "deductible_cents": 25000 },
+      { "tier": "fvrp500", "label": "Full Value Protection, $500 deductible", "rate_per_100_declared_cents": 25, "deductible_cents": 50000 }
+    ]
+  },
+  "accessorials": {
+    "flight_long_carry": { "enabled": true, "basis": "per_100lb", "rate_cents": 175, "source": "Item 140" },
+    "elevator": { "enabled": true, "basis": "per_100lb", "rate_cents": 175, "source": "Item 140 (counts as a flight)" },
+    "piano_flight_inside": { "first_cents": 3045, "each_additional_cents": 1525, "source": "Item 140" },
+    "piano_flight_outside": { "first_cents": 3045, "each_additional_step_cents": 60, "source": "Item 140" },
+    "shuttle": { "enabled": true, "basis": "flat", "default_rate_cents": null },
+    "piano_fee": { "enabled": true, "basis": "flat", "default_rate_cents": null },
+    "bulky_fee": { "enabled": true, "basis": "per_item", "default_rate_cents": null, "types": [] },
+    "extra_stop": { "enabled": true, "basis": "flat", "default_rate_cents": null },
+    "hoisting": { "enabled": false },
+    "appliance_servicing": { "enabled": false }
+  },
+  "packing": {
+    "sell_materials": true,
+    "charge_pack_labor": true,
+    "charge_unpack_labor": true,
+    "labor_rates_source": "Item 340"
+  },
+  "pipeline": ["lead", "estimate_sent", "booked", "completed", "lost"],
+  "scope": {
+    "states": ["CA"],
+    "intrastate_only": true,
+    "min_miles": 100
+  },
+  "out_of_scope_hooks": ["storage_in_transit", "margin_view", "quickbooks_sync", "hoisting", "appliance_servicing", "local_hourly", "interstate"]
+}

@@ -1,0 +1,91 @@
+room,item_name,cubic_feet,pack_flag,bulky,notes
+Living Room,Sofa (3-cushion / full),50,false,false,
+Living Room,Loveseat (2-cushion),35,false,false,
+Living Room,Sectional (per piece),30,false,false,count each piece
+Living Room,Armchair / club chair,10,false,false,
+Living Room,Recliner,20,false,false,
+Living Room,Ottoman / footstool,5,false,false,
+Living Room,Coffee table,10,false,false,glass top -> pack_flag
+Living Room,End table,5,false,false,
+Living Room,Bookcase (small),10,false,false,
+Living Room,Bookcase (large),20,false,false,
+Living Room,TV stand / media console,15,false,false,
+Living Room,Flat-panel TV (boxed),10,true,false,needs TV carton
+Living Room,Floor lamp,3,true,false,
+Living Room,Table lamp,2,true,false,pack in carton
+Living Room,Area rug (rolled),5,false,false,
+Living Room,Grandfather clock,25,true,true,specialty handling
+Living Room,Piano - spinet/console,70,false,true,piano fee + Item 140 flights
+Living Room,Piano - upright,80,false,true,piano fee + Item 140 flights
+Living Room,Piano - baby grand,80,false,true,piano fee + Item 140 flights
+Living Room,Piano - grand,100,false,true,piano fee + Item 140 flights
+Dining Room,Dining table,30,false,false,
+Dining Room,Dining chair,5,false,false,count each
+Dining Room,China cabinet / hutch,40,true,false,glass -> pack
+Dining Room,Buffet / server,30,false,false,
+Dining Room,Tea cart,10,false,false,
+Bedroom,Bed - king (frame + headboard),70,false,false,
+Bedroom,Bed - queen (frame + headboard),60,false,false,
+Bedroom,Bed - full/double,50,false,false,
+Bedroom,Bed - twin,40,false,false,
+Bedroom,Mattress set - king,65,false,false,mattress carton optional
+Bedroom,Mattress set - queen,60,false,false,
+Bedroom,Mattress set - full,50,false,false,
+Bedroom,Mattress set - twin,40,false,false,
+Bedroom,Dresser (double),30,false,false,
+Bedroom,Dresser (triple),50,false,false,
+Bedroom,Chest of drawers,25,false,false,
+Bedroom,Nightstand,5,false,false,
+Bedroom,Armoire,40,false,false,
+Bedroom,Wardrobe,30,false,false,
+Bedroom,Vanity / bench,10,true,false,mirror -> pack
+Bedroom,Cedar chest,15,false,false,
+Bedroom,Crib,15,false,false,
+Kitchen,Refrigerator (small),30,false,false,
+Kitchen,Refrigerator (large),60,false,true,large appliance
+Kitchen,Range / stove,20,false,false,
+Kitchen,Dishwasher (portable),20,false,false,
+Kitchen,Microwave (boxed),5,true,false,
+Kitchen,Kitchen table,20,false,false,
+Kitchen,Kitchen chair,5,false,false,count each
+Kitchen,Utility cart,5,false,false,
+Family/Den,Desk (small),20,false,false,
+Family/Den,Desk (large / executive),40,false,false,
+Family/Den,Office chair,10,false,false,
+Family/Den,File cabinet (2-drawer),10,false,false,
+Family/Den,File cabinet (4-drawer),20,false,false,
+Family/Den,Bookshelf,15,false,false,
+Family/Den,Sofa bed,60,false,false,
+Family/Den,Treadmill,25,false,false,
+Family/Den,Exercise bike,10,false,false,
+Family/Den,Safe (office),20,false,true,bulky fee
+Family/Den,Gun safe,25,false,true,bulky fee + special handling
+Laundry,Washer,25,false,false,
+Laundry,Dryer,25,false,false,
+Laundry,Freezer (small),30,false,false,
+Laundry,Freezer (large),60,false,true,large appliance
+Garage/Outdoor,Workbench,20,false,false,
+Garage/Outdoor,Tool chest,10,false,false,
+Garage/Outdoor,Lawn mower (push),15,false,false,
+Garage/Outdoor,Riding mower,50,false,true,bulky fee
+Garage/Outdoor,Bicycle,6,false,false,
+Garage/Outdoor,BBQ grill,12,false,false,
+Garage/Outdoor,Patio table,20,false,false,
+Garage/Outdoor,Patio chair,5,false,false,count each
+Garage/Outdoor,Patio lounge,12,false,false,
+Garage/Outdoor,Ladder (extension),10,false,false,
+Garage/Outdoor,Pool table,50,false,true,bulky fee + specialty
+Misc,Mirror (large),5,true,false,mirror carton
+Misc,Picture / painting (large),3,true,false,mirror/picture carton
+Misc,Window A/C unit,10,false,false,
+Misc,Sewing machine (cabinet),10,false,false,
+Misc,High chair,5,false,false,
+Misc,Stroller,5,false,false,
+Misc,Aquarium (empty),5,true,false,
+Boxes,Carton - book (1.5 cf),1.5,true,false,see materials-catalog
+Boxes,Carton - medium (3.0 cf),3.0,true,false,
+Boxes,Carton - large (4.5 cf),4.5,true,false,
+Boxes,Carton - extra large (6.0 cf),6.0,true,false,
+Boxes,Dish pack / china barrel (5.2 cf),5.2,true,false,
+Boxes,Wardrobe carton,10,true,false,
+Boxes,Mirror / picture carton,4,true,false,
