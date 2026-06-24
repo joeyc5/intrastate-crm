@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Brand } from "./components/Brand";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
   title: "SVM Intrastate Move Quote",
@@ -11,21 +14,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className="flex min-h-screen flex-col">
-        <header className="border-b border-black/10 bg-white">
-          <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-            <Brand />
-            <span className="text-xs font-medium tracking-wide text-black/45">Cal T 188960</span>
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen">
+        <header className="sticky top-0 z-20 border-b border-line bg-surface/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
+            <div className="flex items-center gap-3.5">
+              <Brand />
+              <span className="hidden h-5 w-px bg-line sm:block" />
+              <span className="hidden text-sm font-medium text-ink-soft sm:block">New quote</span>
+            </div>
+            <span className="rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold tracking-wide text-ink-faint">
+              Cal T 188960
+            </span>
           </div>
         </header>
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-black/10 bg-white">
-          <div className="mx-auto max-w-3xl px-6 py-4 text-xs leading-relaxed text-black/45">
-            Silicon Valley Moving &amp; Storage Inc · 186 Barnard Ave, San Jose CA 95125 · 408-941-0600 ·
-            www.SiliconValleyMoving.com
-          </div>
-        </footer>
+        <main>{children}</main>
       </body>
     </html>
   );
