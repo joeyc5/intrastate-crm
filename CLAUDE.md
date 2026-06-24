@@ -51,5 +51,16 @@ Per the developer's standing preferences: **Next.js (App Router) + TypeScript + 
 ## Company identity (prints on every document)
 Silicon Valley Moving & Storage Inc · 186 Barnard Ave, San Jose CA 95125 · 408-941-0600 · www.SiliconValleyMoving.com · **Cal T 188960**
 
+## Build, run & gotchas (the app is built — Next.js + pricing engine)
+- `lib/pricing/` — pure engine; `priceQuote(input, rates)` is the public API, `loadRates("2026")` reads `data/2026/`. **Server-side only** (reads CSVs via fs). Add charge types as `steps/*.ts` behind `priceQuote`.
+- `app/` — App Router calculator: static page + client `QuoteForm` → server action `app/actions.ts` → `priceQuote`. Rate files never reach the browser.
+- Commands: `npm test` (Vitest) · `npm run typecheck` (tsc, strict + noUncheckedIndexedAccess) · `npm run build` (next build) · `npm run dev|start`.
+- **Money trap:** rate CSVs (item310/320/340) store **dollars** (`rate_per_100lb` = $/100 lb, NOT cents); the loader normalizes to **integer cents**. Wrong = quotes 100× off. All engine money is integer cents; `money.ts` owns Item 32 (half-cent-up) + Item 136 (next-$100) rounding.
+- **React 19 forms:** `<form action>` auto-resets and desyncs controlled inputs after a server action — drive submission from React state via a manual `onSubmit` + typed payload, NOT the `action` prop / FormData.
+- **Build config:** `package.json` is `"type":"module"` → configs are `.mjs`. `next.config.mjs` needs `webpack.extensionAlias {".js":[".ts",".tsx",".js",".jsx"]}` (engine uses `.js` TS-ESM imports) + `outputFileTracingIncludes {"/":["./data/2026/**/*"]}` (so Vercel bundles the rate files).
+- **Tailwind v4:** CSS-first — `@import "tailwindcss"` + brand tokens in `@theme` in `app/globals.css`; no `tailwind.config.js`. Brand red `#f1201e` / blue `#0064dd`; logo `public/svm-logo.png`.
+- **Local verify:** a dev watcher cycles ports 3000/3300 — serve verify builds on a high free port (`PORT=4317 npm run start`) and confirm in a real browser (caught bugs tests missed).
+- Design docs + build plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+
 ## Status
-Spec v0.1 **audited against MAX4 2026** → corrections in `docs/SPEC-AUDIT-2026.md`. Mileage basis decided: **GPS**. Pending: SVM business inputs (`docs/SVM-INTAKE-QUESTIONNAIRE.md`), then write **v0.2** spec + config. No application code yet.
+Spec audited vs MAX4 2026 (`docs/SPEC-AUDIT-2026.md`); mileage basis = GPS. **Built & merged to `main`:** pricing-engine core (`lib/pricing/`), Next.js quote calculator (`app/`), packing pass (Item 340), branding/logo. **Decided:** materials tax 9.25% (Santa Clara); packing labor = hourly (per hour per person; pack=origin, unpack=dest). **Next:** accessorials (Items 140/164/184/148-156) → printed/PDF quote → Save & CRM (Supabase). Open: BHGS ACV-$20k default chargeability.
