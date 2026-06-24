@@ -7,6 +7,7 @@ import { applyCaps } from "./steps/applyCaps.js";
 import { applyDiscount } from "./steps/applyDiscount.js";
 import { total } from "./steps/total.js";
 import { packing } from "./steps/packing.js";
+import { accessorials } from "./steps/accessorials.js";
 import { roundItem32 } from "./money.js";
 import { assertInvariants } from "./guardrails/invariants.js";
 
@@ -20,6 +21,8 @@ export function priceQuote(input: QuoteInput, rates: RateTables): QuoteResult {
 
   const pack = packing(input.packing, rates, { originTerritory, destTerritory });
   lineItems.push(...pack.lineItems);
+
+  lineItems.push(...accessorials(input.accessorials, rates, { originTerritory, destTerritory }));
 
   applyCaps(lineItems);
 
@@ -62,11 +65,13 @@ export function priceQuote(input: QuoteInput, rates: RateTables): QuoteResult {
 
 export { loadRates } from "./rates/load.js";
 export { packingContainers } from "./rates/item340.js";
+export { bulkyArticles } from "./rates/accessorials.js";
 export { penalty65Tier1, penalty65Tier2 } from "./guardrails/penalty65.js";
 export type {
   QuoteInput, QuoteResult, LineItem, QuoteDerived, RateTables,
   Territory, ValuationTier, WeightInput, ValuationInput,
   PackingInput, PackingContainerInput, PackingLaborInput, TimeClass, ContainerRate,
+  AccessorialsInput, FlightsInput, LongCarryInput, ShuttleInput, BulkyItemInput, BulkyArticleRate,
 } from "./types.js";
 export {
   DistanceTooShortError, RateDataError, CapViolationError, ValuationRequiredError,
