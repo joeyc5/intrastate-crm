@@ -9,19 +9,16 @@ import {
   CapViolationError,
   type QuoteInput,
 } from "../lib/pricing";
-import type { CalcState } from "./lib/types";
+import type { CalcState, QuoteFormPayload } from "./lib/types";
 
 // Loaded once per server instance (the rate dataset is static per tariff year).
 const rates = loadRates("2026");
 
-export async function calculateQuote(_prev: CalcState, formData: FormData): Promise<CalcState> {
+export async function calculateQuote(_prev: CalcState, payload: QuoteFormPayload): Promise<CalcState> {
   try {
-    const originCounty = String(formData.get("originCounty") ?? "").trim();
-    const destCounty = String(formData.get("destCounty") ?? "").trim();
-    const distanceMiles = Number(formData.get("distanceMiles"));
-    const weightBasis = String(formData.get("weightBasis") ?? "cube");
-    const tier = String(formData.get("valuationTier") ?? "");
-    const discountRaw = Number(formData.get("discountPct"));
+    const originCounty = payload.originCounty.trim();
+    const destCounty = payload.destCounty.trim();
+    const distanceMiles = Number(payload.distanceMiles);
 
     if (!originCounty || !destCounty) {
       return { ok: false, error: "Please choose both an origin and a destination county." };
@@ -31,25 +28,26 @@ export async function calculateQuote(_prev: CalcState, formData: FormData): Prom
     }
 
     let weight: QuoteInput["weight"];
-    if (weightBasis === "scale") {
-      const pounds = Number(formData.get("pounds"));
+    if (payload.weightBasis === "scale") {
+      const pounds = Number(payload.pounds);
       if (!Number.isFinite(pounds) || pounds <= 0) {
         return { ok: false, error: "Enter the scale weight in pounds." };
       }
       weight = { basis: "scale", pounds };
     } else {
-      const cubicFeet = Number(formData.get("cubicFeet"));
+      const cubicFeet = Number(payload.cubicFeet);
       if (!Number.isFinite(cubicFeet) || cubicFeet <= 0) {
         return { ok: false, error: "Enter the estimated cubic feet." };
       }
       weight = { basis: "cube", cubicFeet };
     }
 
+    const tier = payload.valuationTier;
     let valuation: QuoteInput["valuation"];
     if (tier === "released") {
       valuation = { tier: "released" };
     } else if (tier === "fvrp250" || tier === "fvrp500") {
-      const declaredValueUsd = Number(formData.get("declaredValueUsd"));
+      const declaredValueUsd = Number(payload.declaredValueUsd);
       if (!Number.isFinite(declaredValueUsd) || declaredValueUsd <= 0) {
         return { ok: false, error: "Enter the declared value for Full Value protection." };
       }
@@ -58,38 +56,19 @@ export async function calculateQuote(_prev: CalcState, formData: FormData): Prom
       return { ok: false, error: "Please choose a valuation option." };
     }
 
+    const discountRaw = Number(payload.discountPct);
     if (Number.isFinite(discountRaw) && (discountRaw < 0 || discountRaw > 100)) {
       return { ok: false, error: "Discount must be between 0 and 100%." };
     }
     const discountPct = Number.isFinite(discountRaw) && discountRaw > 0 ? discountRaw / 100 : 0;
 
     // Packing (optional)
-    const containerTypes = formData.getAll("containerType").map((v) => String(v));
-    const containerQtys = formData.getAll("containerQty").map((v) => Number(v));
-    const containers = containerTypes
-      .map((type, i) => ({ type, qty: containerQtys[i] ?? 0 }))
+    const containers = payload.containers
+      .map((c) => ({ type: c.type, qty: Number(c.qty) }))
       .filter((c) => c.type !== "" && Number.isFinite(c.qty) && c.qty > 0);
 
-    const packHours = Number(formData.get("packHours"));
-    const pack =
-      Number.isFinite(packHours) && packHours > 0
-        ? {
-            hours: packHours,
-            persons: Math.max(1, Math.floor(Number(formData.get("packPersons")) || 1)),
-            timeClass: toTimeClass(formData.get("packTimeClass")),
-          }
-        : undefined;
-
-    const unpackHours = Number(formData.get("unpackHours"));
-    const unpack =
-      Number.isFinite(unpackHours) && unpackHours > 0
-        ? {
-            hours: unpackHours,
-            persons: Math.max(1, Math.floor(Number(formData.get("unpackPersons")) || 1)),
-            timeClass: toTimeClass(formData.get("unpackTimeClass")),
-          }
-        : undefined;
-
+    const pack = toLabor(payload.pack);
+    const unpack = toLabor(payload.unpack);
     const packing = containers.length > 0 || pack || unpack ? { containers, pack, unpack } : undefined;
 
     const input: QuoteInput = {
@@ -124,7 +103,19 @@ export async function calculateQuote(_prev: CalcState, formData: FormData): Prom
   }
 }
 
-function toTimeClass(v: FormDataEntryValue | null): "straight" | "time_and_half" | "double" {
-  const s = String(v ?? "");
+function toLabor(
+  labor: { hours: string; persons: string; timeClass: string } | undefined,
+): { hours: number; persons: number; timeClass: "straight" | "time_and_half" | "double" } | undefined {
+  if (!labor) return undefined;
+  const hours = Number(labor.hours);
+  if (!Number.isFinite(hours) || hours <= 0) return undefined;
+  return {
+    hours,
+    persons: Math.max(1, Math.floor(Number(labor.persons) || 1)),
+    timeClass: toTimeClass(labor.timeClass),
+  };
+}
+
+function toTimeClass(s: string): "straight" | "time_and_half" | "double" {
   return s === "time_and_half" || s === "double" ? s : "straight";
 }
