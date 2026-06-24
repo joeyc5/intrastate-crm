@@ -173,7 +173,7 @@ Per the corrected schema in `data/2026/README.md`:
 - **Weight columns** are single *minimum-weight* columns (no upper bound): `ANY-QTY (<1000)`, `1000`, `2000`, `5000`, `8000`, `12000`, `16000`.
 - **Mileage rows** are over/not-over, variable width (10-mi steps to 100, 20-mi to 200, 25-mi to 500, 50-mi to 850). For distance **> 850 mi**: `rate(800–850) + ceil((miles − 850) / 50) × add_per_50`.
 - **Weight-break optimization (Item 310 NOTE 1 / Item 20):** compute the charge using the shipment's actual weight column **and** each higher minimum-weight column (substituting that column's minimum weight as the billed weight), and **return the cheapest**. Record which weight column won (`item310WeightColumnLb`). Computed crossovers must match the tariff's published Break Points (verified by test).
-- Rate unit: **cents per 100 lb**. `line_haul amountCents = round(weightLb × ratePer100 / 100)`.
+- **Rate unit (verified against the tariff + the independent wide-format file):** the source CSV `rate_per_100lb` is **dollars per 100 lb** (e.g., `59.95` = $59.95/100 lb — the magnitude only makes sense as dollars: 5,000 lb × $59.95/100 lb = $2,997.50). The loader **normalizes dollars → integer cents per 100 lb** (`rateCentsPer100 = round(dollars × 100)`, e.g., `5995`). Then `line_haul amountCents = round(weightLb × rateCentsPer100 / 100)`.
 
 ---
 
