@@ -6,10 +6,15 @@ Nothing here blocks scaffolding the app; placeholders are in `svm-config.json` a
 - [ ] **Logo file** (SVG/PNG) and **brand colors** (primary + secondary hex) → quote & paperwork design.
 - [ ] **Accessorial amounts:** shuttle fee, piano fee, bulky fee(s), extra-stop fee. Or confirm "default to tariff max / typical and I'll adjust in-app."
 - [ ] **Bulky list:** which article types get a bulky fee (e.g., safe, gun safe, pool table, riding mower) and each amount.
+	- Piano $150. Safe's $300. 
 - [ ] **Material prices:** SVM's own carton/supply prices if not using Item 340 max.
+	- 
 - [ ] **Materials sales-tax rate** and handling (accountant confirm; Santa Clara County point-of-sale ≈ 9.125% as a starting reference, do not hardcode without confirming).
+	- Correct, Santa Clara County sales tax
 - [ ] **Quote validity period** (default 30 days?).
+	- Yes, 30 days
 - [ ] **Payment terms** language: deposit policy, accepted methods, any card surcharge, when balance is due.
+	- All major CC's, bank transfer, Check
 
 ## B. From the tariff — ingest/confirm during build
 - [ ] **Item 310** distance-rate matrix → `rate_item310.csv` (see `rate-schemas.md`).
