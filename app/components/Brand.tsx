@@ -1,10 +1,14 @@
+import Image from "next/image";
+
 export function Brand() {
   return (
-    <div className="leading-none">
-      <div className="text-lg font-extrabold tracking-tight text-svm-red sm:text-xl">SILICON VALLEY</div>
-      <div className="text-[0.7rem] font-semibold tracking-[0.22em] text-svm-blue sm:text-xs">
-        MOVING &amp; STORAGE
-      </div>
-    </div>
+    <Image
+      src="/svm-logo.png"
+      alt="Silicon Valley Moving & Storage"
+      width={1712}
+      height={310}
+      priority
+      className="h-9 w-auto sm:h-10"
+    />
   );
 }
