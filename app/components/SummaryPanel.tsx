@@ -5,10 +5,11 @@ import { centsToUsd, formatLb } from "../lib/format";
  * The signature surface: a dark, layered panel anchored by the live
  * Not-to-Exceed figure with the itemized breakdown beneath it.
  */
-export function SummaryPanel({ result }: { result: QR }) {
+export function SummaryPanel({ result, pending = false }: { result: QR; pending?: boolean }) {
   const d = result.derived;
   return (
     <div
+      aria-busy={pending}
       className="overflow-hidden rounded-2xl text-white shadow-panel ring-1 ring-white/10"
       style={{
         backgroundImage:
@@ -21,8 +22,21 @@ export function SummaryPanel({ result }: { result: QR }) {
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/65">
             Not-to-Exceed
           </span>
+          <span
+            aria-hidden="true"
+            className={`ml-1 text-[10px] font-medium uppercase tracking-wide text-white/50 transition-opacity duration-200 ${
+              pending ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            updating…
+          </span>
         </div>
-        <div className="mt-2 text-5xl font-bold tabular-nums tracking-tight">
+        <div
+          aria-live="polite"
+          className={`mt-2 text-5xl font-bold tabular-nums tracking-tight transition-opacity duration-200 ${
+            pending ? "opacity-60" : "opacity-100"
+          }`}
+        >
           {centsToUsd(result.nteTotalCents)}
         </div>
         <div className="mt-2 text-sm text-white/65">

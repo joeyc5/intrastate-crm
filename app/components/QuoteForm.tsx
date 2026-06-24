@@ -1,12 +1,10 @@
 "use client";
 
-import { useActionState, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { calculateQuote } from "../actions";
-import type { CalcState, QuoteFormPayload } from "../lib/types";
+import type { QuoteFormPayload } from "../lib/types";
 import type { QuoteResult } from "../../lib/pricing";
 import { SummaryPanel } from "./SummaryPanel";
-
-const INITIAL: CalcState = { ok: false };
 
 const TIERS = [
   { value: "released", label: "Released value — free ($0.60/lb)" },
@@ -19,6 +17,8 @@ const TIME_CLASSES = [
   { value: "time_and_half", label: "Time-and-a-half" },
   { value: "double", label: "Double time" },
 ];
+
+const DEBOUNCE_MS = 300;
 
 const fieldBase =
   "rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-svm-blue focus:ring-4 focus:ring-svm-blue/15";
@@ -41,9 +41,7 @@ export function QuoteForm({
   bulkyArticles: { key: string; label: string }[];
   initialResult: QuoteResult;
 }) {
-  const [state, formAction, pending] = useActionState(calculateQuote, INITIAL);
-
-  // Controlled state — survives the server action so inputs persist for tweak-and-recalc.
+  // Controlled state — authoritative, survives recompute so inputs never desync.
   const [originCounty, setOriginCounty] = useState("Santa Clara");
   const [destCounty, setDestCounty] = useState("Los Angeles");
   const [distanceMiles, setDistanceMiles] = useState("350");
@@ -77,6 +75,12 @@ export function QuoteForm({
   const [bulkyRows, setBulkyRows] = useState<BoxRow[]>([]);
   const nextBulkyId = useRef(0);
 
+  // Live-pricing state.
+  const [result, setResult] = useState<QuoteResult>(initialResult);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const reqId = useRef(0);
+
   const firstContainer = packingContainers[0]?.key ?? "";
   const addBox = () => setBoxes((b) => [...b, { id: nextId.current++, type: firstContainer, qty: "1" }]);
   const updateBox = (id: number, patch: Partial<BoxRow>) =>
@@ -89,41 +93,94 @@ export function QuoteForm({
     setBulkyRows((b) => b.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   const removeBulky = (id: number) => setBulkyRows((b) => b.filter((row) => row.id !== id));
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const payload: QuoteFormPayload = {
-      originCounty,
-      destCounty,
-      distanceMiles,
-      weightBasis,
-      cubicFeet,
-      pounds,
-      valuationTier: tier,
-      declaredValueUsd,
-      discountPct,
-      containers: showPacking ? boxes.map((b) => ({ type: b.type, qty: b.qty })) : [],
-      pack: showPacking ? { hours: packHours, persons: packPersons, timeClass: packTimeClass } : undefined,
-      unpack:
-        showPacking && showUnpack
-          ? { hours: unpackHours, persons: unpackPersons, timeClass: unpackTimeClass }
-          : undefined,
-      flights: showAccessorials ? { count: flightCount, weightLb: flightWeight } : undefined,
-      longCarry: showAccessorials ? { feet: longCarryFeet, weightLb: longCarryWeight } : undefined,
-      shuttle: showAccessorials ? { hours: shuttleHours, persons: shuttlePersons, timeClass: shuttleTimeClass } : undefined,
-      extraStops: showAccessorials ? extraStops : undefined,
-      bulky: showAccessorials ? bulkyRows.map((b) => ({ type: b.type, qty: b.qty })) : [],
-    };
-    formAction(payload);
-  };
+  const buildPayload = (): QuoteFormPayload => ({
+    originCounty,
+    destCounty,
+    distanceMiles,
+    weightBasis,
+    cubicFeet,
+    pounds,
+    valuationTier: tier,
+    declaredValueUsd,
+    discountPct,
+    containers: showPacking ? boxes.map((b) => ({ type: b.type, qty: b.qty })) : [],
+    pack: showPacking ? { hours: packHours, persons: packPersons, timeClass: packTimeClass } : undefined,
+    unpack:
+      showPacking && showUnpack
+        ? { hours: unpackHours, persons: unpackPersons, timeClass: unpackTimeClass }
+        : undefined,
+    flights: showAccessorials ? { count: flightCount, weightLb: flightWeight } : undefined,
+    longCarry: showAccessorials ? { feet: longCarryFeet, weightLb: longCarryWeight } : undefined,
+    shuttle: showAccessorials ? { hours: shuttleHours, persons: shuttlePersons, timeClass: shuttleTimeClass } : undefined,
+    extraStops: showAccessorials ? extraStops : undefined,
+    bulky: showAccessorials ? bulkyRows.map((b) => ({ type: b.type, qty: b.qty })) : [],
+  });
+  // Always point at the latest payload builder so a pending debounced timer
+  // reads current state at fire time — not the state captured when it was
+  // scheduled (otherwise a discrete change made mid-debounce gets clobbered).
+  const payloadRef = useRef(buildPayload);
+  payloadRef.current = buildPayload;
 
-  const result = state.result ?? initialResult;
+  // Recompute on the server. The stale-guard ensures a slow earlier response
+  // can never overwrite a newer one, and a failed/invalid calc keeps the last
+  // good number on screen rather than blanking it.
+  const priceNow = useCallback(async (payload: QuoteFormPayload) => {
+    const id = ++reqId.current;
+    setPending(true);
+    try {
+      const res = await calculateQuote({ ok: false }, payload);
+      if (id !== reqId.current) return; // a newer request superseded this one
+      setPending(false);
+      if (res.ok && res.result) {
+        setResult(res.result);
+        setError(null);
+      } else {
+        setError(res.error ?? "That combination can’t be priced yet.");
+      }
+    } catch {
+      if (id !== reqId.current) return;
+      setPending(false);
+      setError("Something went wrong calculating that quote.");
+    }
+  }, []);
+
+  // Discrete controls (dropdowns, radios, toggles) commit instantly; the change
+  // IS the decision, so there's nothing to wait for.
+  const instantKey = JSON.stringify([
+    originCounty, destCounty, weightBasis, tier,
+    showPacking, showUnpack, packTimeClass, unpackTimeClass,
+    showAccessorials, shuttleTimeClass,
+  ]);
+  const firstInstant = useRef(true);
+  useEffect(() => {
+    if (firstInstant.current) { firstInstant.current = false; return; }
+    priceNow(payloadRef.current());
+  }, [instantKey, priceNow]);
+
+  // Typed fields (numbers, row edits) debounce so the price settles after a
+  // pause instead of flickering on every keystroke.
+  const typedKey = JSON.stringify([
+    distanceMiles, cubicFeet, pounds, declaredValueUsd, discountPct,
+    packHours, packPersons, unpackHours, unpackPersons,
+    flightCount, flightWeight, longCarryFeet, longCarryWeight,
+    shuttleHours, shuttlePersons, extraStops, boxes, bulkyRows,
+  ]);
+  const firstTyped = useRef(true);
+  useEffect(() => {
+    if (firstTyped.current) { firstTyped.current = false; return; }
+    const t = setTimeout(() => priceNow(payloadRef.current()), DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [typedKey, priceNow]);
+
+  // Prices update live; the form never does a full submit (Enter shouldn't reload).
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => e.preventDefault();
 
   return (
     <div>
       <div className="mb-6 sm:mb-8">
         <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">Intrastate move quote</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          California moves over 100 miles · MAX4 2026 Not-to-Exceed pricing
+          California moves over 100 miles · MAX4 2026 Not-to-Exceed pricing · updates as you type
         </p>
       </div>
 
@@ -323,24 +380,16 @@ export function QuoteForm({
             </Field>
           </Card>
 
-          {state.error && (
+          {error && !pending && (
             <p role="alert" className="rounded-xl border border-svm-red/20 bg-svm-red/5 px-4 py-3 text-sm text-svm-red-dark">
-              {state.error}
+              {error}
             </p>
           )}
-
-          <button
-            type="submit"
-            disabled={pending}
-            className="w-full rounded-xl bg-svm-red px-4 py-3.5 font-semibold text-white shadow-sm transition hover:bg-svm-red-dark focus-visible:ring-4 focus-visible:ring-svm-red/25 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {pending ? "Calculating…" : "Calculate Not-to-Exceed"}
-          </button>
         </form>
 
         <aside className="lg:col-span-5">
           <div className="lg:sticky lg:top-24">
-            <SummaryPanel result={result} />
+            <SummaryPanel result={result} pending={pending} />
           </div>
         </aside>
       </div>
