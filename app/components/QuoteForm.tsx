@@ -5,6 +5,7 @@ import { calculateQuote } from "../actions";
 import type { QuoteFormPayload } from "../lib/types";
 import type { QuoteResult } from "../../lib/pricing";
 import { SummaryPanel } from "./SummaryPanel";
+import { PrintQuote, type PrintQuoteData } from "./PrintQuote";
 
 const TIERS = [
   { value: "released", label: "Released value — free ($0.60/lb)" },
@@ -80,6 +81,36 @@ export function QuoteForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const reqId = useRef(0);
+
+  // Customer & move details — for the printed quote document only. These do NOT
+  // affect pricing, so they're deliberately kept out of the recompute keys below
+  // (typing a customer name must never fire a server recompute).
+  const [custName, setCustName] = useState("");
+  const [custPhone, setCustPhone] = useState("");
+  const [custEmail, setCustEmail] = useState("");
+  const [originAddress, setOriginAddress] = useState("");
+  const [destAddress, setDestAddress] = useState("");
+  const [pickupKind, setPickupKind] = useState<"date" | "window">("date");
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupWindow, setPickupWindow] = useState("");
+  const [deliveryKind, setDeliveryKind] = useState<"date" | "window">("date");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryWindow, setDeliveryWindow] = useState("");
+  const [depositUsd, setDepositUsd] = useState("");
+  const [quoteNo, setQuoteNo] = useState("");
+  const [quoteDate, setQuoteDate] = useState("");
+  const [validThrough, setValidThrough] = useState("");
+
+  // Quote number + dates generated on the client to avoid an SSR hydration mismatch.
+  useEffect(() => {
+    const now = new Date();
+    const ymd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    setQuoteNo(`SVM-${ymd}-${rand}`);
+    const fmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
+    setQuoteDate(fmt.format(now));
+    setValidThrough(fmt.format(new Date(now.getTime() + 30 * 86_400_000)));
+  }, []);
 
   const firstContainer = packingContainers[0]?.key ?? "";
   const addBox = () => setBoxes((b) => [...b, { id: nextId.current++, type: firstContainer, qty: "1" }]);
@@ -175,8 +206,30 @@ export function QuoteForm({
   // Prices update live; the form never does a full submit (Enter shouldn't reload).
   const onSubmit = (e: FormEvent<HTMLFormElement>) => e.preventDefault();
 
+  const fmtDate = (s: string) =>
+    s ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${s}T00:00:00`)) : "";
+
+  const printData: PrintQuoteData = {
+    quoteNo,
+    quoteDate,
+    validThrough,
+    customer: { name: custName, phone: custPhone, email: custEmail },
+    move: {
+      originAddress,
+      destAddress,
+      originCounty,
+      destCounty,
+      pickup: pickupKind === "date" ? fmtDate(pickupDate) : pickupWindow,
+      delivery: deliveryKind === "date" ? fmtDate(deliveryDate) : deliveryWindow,
+    },
+    depositCents: Math.max(0, Math.round((Number(depositUsd) || 0) * 100)),
+  };
+
+  const onMakePdf = () => window.print();
+
   return (
-    <div>
+    <>
+      <div className="print:hidden">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">Intrastate move quote</h1>
         <p className="mt-1 text-sm text-ink-soft">
@@ -186,6 +239,57 @@ export function QuoteForm({
 
       <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
         <form onSubmit={onSubmit} className="space-y-5 lg:col-span-7">
+          {/* Customer & move details (for the printed quote — not priced) */}
+          <Card>
+            <CardTitle>Customer &amp; move details</CardTitle>
+            <div className="grid gap-4">
+              <Field label="Customer name">
+                <input value={custName} onChange={(e) => setCustName(e.target.value)} placeholder="Full name" className={inputCls} />
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Phone">
+                  <input type="tel" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} placeholder="(408) 555-0123" className={inputCls} />
+                </Field>
+                <Field label="Email">
+                  <input type="email" value={custEmail} onChange={(e) => setCustEmail(e.target.value)} placeholder="name@email.com" className={inputCls} />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Origin address">
+                  <input value={originAddress} onChange={(e) => setOriginAddress(e.target.value)} placeholder="Street, city" className={inputCls} />
+                </Field>
+                <Field label="Destination address">
+                  <input value={destAddress} onChange={(e) => setDestAddress(e.target.value)} placeholder="Street, city" className={inputCls} />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Pickup">
+                  <DateOrWindow
+                    kind={pickupKind}
+                    onKind={setPickupKind}
+                    date={pickupDate}
+                    onDate={setPickupDate}
+                    window={pickupWindow}
+                    onWindow={setPickupWindow}
+                  />
+                </Field>
+                <Field label="Delivery">
+                  <DateOrWindow
+                    kind={deliveryKind}
+                    onKind={setDeliveryKind}
+                    date={deliveryDate}
+                    onDate={setDeliveryDate}
+                    window={deliveryWindow}
+                    onWindow={setDeliveryWindow}
+                  />
+                </Field>
+              </div>
+              <Field label="Deposit ($)" hint="Balance due is the Not-to-Exceed total minus this deposit">
+                <input type="number" min={0} step={1} value={depositUsd} onChange={(e) => setDepositUsd(e.target.value)} placeholder="0" className={`${inputCls} sm:max-w-[12rem]`} />
+              </Field>
+            </div>
+          </Card>
+
           {/* Route & shipment */}
           <Card>
             <CardTitle>Route &amp; shipment</CardTitle>
@@ -389,11 +493,13 @@ export function QuoteForm({
 
         <aside className="lg:col-span-5">
           <div className="lg:sticky lg:top-24">
-            <SummaryPanel result={result} pending={pending} />
+            <SummaryPanel result={result} pending={pending} onMakePdf={onMakePdf} />
           </div>
         </aside>
       </div>
-    </div>
+      </div>
+      <PrintQuote data={printData} result={result} />
+    </>
   );
 }
 
@@ -425,5 +531,35 @@ function ToggleHeader({ checked, onChange, label }: { checked: boolean; onChange
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-svm-blue" />
       {label}
     </label>
+  );
+}
+
+function DateOrWindow({
+  kind,
+  onKind,
+  date,
+  onDate,
+  window: win,
+  onWindow,
+}: {
+  kind: "date" | "window";
+  onKind: (k: "date" | "window") => void;
+  date: string;
+  onDate: (v: string) => void;
+  window: string;
+  onWindow: (v: string) => void;
+}) {
+  return (
+    <div className="flex gap-2">
+      <select value={kind} onChange={(e) => onKind(e.target.value as "date" | "window")} className={`${fieldBase} shrink-0 bg-white`}>
+        <option value="date">Date</option>
+        <option value="window">Window</option>
+      </select>
+      {kind === "date" ? (
+        <input type="date" value={date} onChange={(e) => onDate(e.target.value)} className={`${fieldBase} min-w-0 flex-1`} />
+      ) : (
+        <input type="text" value={win} onChange={(e) => onWindow(e.target.value)} placeholder="e.g., Jul 1, AM" className={`${fieldBase} min-w-0 flex-1`} />
+      )}
+    </div>
   );
 }

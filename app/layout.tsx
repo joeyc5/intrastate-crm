@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen">
-        <header className="sticky top-0 z-20 border-b border-line bg-surface/80 backdrop-blur-md">
+        <header className="sticky top-0 z-20 border-b border-line bg-surface/80 backdrop-blur-md print:hidden">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
             <div className="flex items-center gap-3.5">
               <Brand />

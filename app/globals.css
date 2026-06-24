@@ -41,3 +41,12 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* Print: only the quote document shows (the app UI is print:hidden); drop the
+   screen ground so nothing bleeds onto the page. */
+@media print {
+  body {
+    background: #fff;
+    background-image: none;
+  }
+}
